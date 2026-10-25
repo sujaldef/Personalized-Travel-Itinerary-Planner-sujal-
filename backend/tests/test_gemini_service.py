@@ -99,6 +99,30 @@ def test_generate_itinerary_uses_gemini_structured_output(monkeypatch: pytest.Mo
     assert config.response_schema is ItineraryResponse
 
 
+def test_generate_itinerary_uses_inline_schema_for_flash_lite(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = valid_response()
+    fake_client = FakeAsyncClient(SimpleNamespace(text=expected.model_dump_json()))
+    settings = configured_settings()
+    settings.gemini_model = "gemini-3.5-flash-lite"
+    monkeypatch.setattr(services, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        services.genai,
+        "Client",
+        lambda **kwargs: SimpleNamespace(aio=fake_client),
+    )
+
+    result = asyncio.run(services.generate_itinerary(valid_trip()))
+
+    assert result == expected
+    assert fake_client.models.request["model"] == "gemini-3.5-flash-lite"
+    assert "Return JSON matching this JSON Schema:" in fake_client.models.request["contents"]
+    config = fake_client.models.request["config"]
+    assert config.response_mime_type == "application/json"
+    assert config.response_schema is None
+
+
 def test_generate_itinerary_rejects_malformed_json(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(services, "get_settings", configured_settings)
     monkeypatch.setattr(
@@ -140,7 +164,7 @@ def test_generate_itinerary_reports_quota_errors_without_provider_secrets(
         (400, "supported model"),
         (401, "API key"),
         (403, "denied access"),
-        (404, "could not find the configured model"),
+        (404, "could not use the configured model"),
     ],
 )
 def test_generate_itinerary_classifies_gemini_client_errors(

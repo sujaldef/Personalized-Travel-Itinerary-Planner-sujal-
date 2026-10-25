@@ -56,15 +56,23 @@ async def generate_itinerary(
         )
 
     response_schema = DayItinerary if day_number is not None else ItineraryResponse
+    contents = _trip_prompt(trip, day_number)
+    use_prompt_schema = settings.gemini_model == "gemini-3.5-flash-lite"
+    if use_prompt_schema:
+        contents += (
+            "\nReturn JSON matching this JSON Schema:\n"
+            + json.dumps(response_schema.model_json_schema(), ensure_ascii=False)
+        )
+
     try:
         async with genai.Client(api_key=settings.gemini_api_key).aio as client:
             response = await client.models.generate_content(
                 model=settings.gemini_model,
-                contents=_trip_prompt(trip, day_number),
+                contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=_system_prompt(),
                     response_mime_type="application/json",
-                    response_schema=response_schema,
+                    response_schema=None if use_prompt_schema else response_schema,
                     temperature=0.7,
                 ),
             )
@@ -94,11 +102,15 @@ async def generate_itinerary(
             )
         elif provider_status == 404:
             detail = (
-                "Gemini could not find the configured model (HTTP 404). "
-                "Set GEMINI_MODEL to a supported model such as gemini-2.5-flash."
+                "Gemini could not use the configured model (HTTP 404). Check "
+                "that GEMINI_MODEL is available to your Google AI Studio project; "
+                "the current default is gemini-3.5-flash-lite."
             )
         elif isinstance(provider_status, int) and provider_status >= 500:
-            detail = "Gemini is temporarily unavailable. Try again shortly."
+            detail = (
+                "Gemini is temporarily unavailable, possibly due to high demand. "
+                "Try again shortly."
+            )
         else:
             detail = "The Gemini request failed. Check the backend logs for provider details."
         raise HTTPException(

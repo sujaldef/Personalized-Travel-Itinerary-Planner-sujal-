@@ -80,7 +80,7 @@ Supabase creates and manages its own `auth.users` table; do not create a separat
 
 ## Gemini setup
 
-Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey). Add it only to `backend\.env` as `GEMINI_API_KEY`; never put it in the frontend `.env`, a `VITE_` variable, source code, or Git. The default model is `gemini-2.5-flash`, a stable model listed in Google's Gemini API model docs. Free-tier model availability and request limits depend on Google's current project and region limits; check [Gemini API pricing and free-tier details](https://ai.google.dev/gemini-api/docs/pricing) and [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) for your account. Set `GEMINI_MODEL` to another supported model if needed.
+Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey). Add it only to `backend\.env` as `GEMINI_API_KEY`; never put it in the frontend `.env`, a `VITE_` variable, source code, or Git. The default model is `gemini-3.5-flash-lite`; the backend includes the output schema in the prompt for this model and validates Gemini's JSON response before returning it. Model availability and request limits depend on Google's current project and region limits; check [Gemini API pricing and free-tier details](https://ai.google.dev/gemini-api/docs/pricing) and [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) for your account. Set `GEMINI_MODEL` to another model available to your project if needed.
 
 ## Configure and run locally
 
@@ -98,7 +98,7 @@ VITE_API_URL=http://localhost:8000
 
 ```dotenv
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_OR_SECRET_KEY
